@@ -1,18 +1,19 @@
 #!/usr/bin/python
-
-import requests
-import re
+import argparse
 import json
+import re
+import requests
 import sys
-from io import BytesIO
 from PIL import Image
+from io import BytesIO
+
 
 def main():
     BASE_URL = 'https://www.instagram.com/{profile}/?hl=es'
-    arg = ''
-    if len(sys.argv) > 1:
-        arg = sys.argv[1]
-    profile = arg or 'bighelmet7'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-u', '--user', help="Specify an user account", default='bighelmet7')
+    args = parser.parse_args()
+    profile = args.user
     url = BASE_URL.format(profile=profile)
     resp = requests.get(url)
     pattern = re.compile('window._sharedData = ({.*})')
@@ -25,7 +26,9 @@ def main():
             info = json.loads(text)
             entry_data = info.get('entry_data', {})
             profile_page = entry_data.get('ProfilePage', [])
-            graphql = profile_page[0].get('graphql', {})	# ProfilePage its an array of one element.
+            graphql = dict()
+            if profile_page:
+                graphql = profile_page[0].get('graphql', {})	# ProfilePage its an array of one element.
             user = graphql.get('user', {})
             profile_pic_url = user.get('profile_pic_url_hd', '')
             if profile_pic_url:
